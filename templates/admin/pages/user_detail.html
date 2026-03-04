@@ -1,0 +1,223 @@
+{{template "admin_base" .}}
+{{define "content"}}
+<div class="mb-4">
+  <a href="/admin/users" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Quay lại danh sách
+  </a>
+</div>
+
+{{with .target_user}}
+<!-- User Info Card -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-2 text-center">
+        {{if .AvatarURL}}
+        <img src="{{.AvatarURL}}" alt="Avatar" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;" />
+        {{else}}
+        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width:100px;height:100px;font-size:40px;">
+          {{slice .FullName 0 1}}
+        </div>
+        {{end}}
+      </div>
+      <div class="col-md-6">
+        <h4 class="mb-1">{{.FullName}}</h4>
+        <p class="text-muted mb-2">{{.Email}}</p>
+        <table class="table table-sm table-borderless mb-0" style="max-width:400px;">
+          <tr>
+            <td class="text-muted" style="width:140px;">Số điện thoại</td>
+            <td>{{if .Phone}}{{.Phone}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Vai trò</td>
+            <td>
+              {{if eq .Role "admin"}}
+              <span class="badge text-bg-danger">Admin</span>
+              {{else}}
+              <span class="badge text-bg-info">User</span>
+              {{end}}
+            </td>
+          </tr>
+          <tr>
+            <td class="text-muted">Trạng thái</td>
+            <td>
+              {{if eq .Status "active"}}
+              <span class="badge text-bg-success">Active</span>
+              {{else if eq .Status "inactive"}}
+              <span class="badge text-bg-warning">Inactive</span>
+              {{else if eq .Status "banned"}}
+              <span class="badge text-bg-danger">Banned</span>
+              {{else}}
+              <span class="badge text-bg-secondary">{{.Status}}</span>
+              {{end}}
+            </td>
+          </tr>
+          <tr>
+            <td class="text-muted">Ngày tạo</td>
+            <td>{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Cập nhật lần cuối</td>
+            <td>{{.UpdatedAt.Format "02/01/2006 15:04"}}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-md-4">
+        {{if ne .Role "admin"}}
+        <div class="card bg-light border-0">
+          <div class="card-body">
+            <h6 class="card-title mb-3">Thay đổi trạng thái</h6>
+            <form method="POST" action="/admin/users/{{.ID}}/status">
+              <input type="hidden" name="_csrf" value="{{$.csrf_token}}" />
+              <div class="mb-3">
+                <select name="status" class="form-select">
+                  <option value="active" {{if eq .Status "active"}}selected{{end}}>Active</option>
+                  <option value="inactive" {{if eq .Status "inactive"}}selected{{end}}>Inactive</option>
+                  <option value="banned" {{if eq .Status "banned"}}selected{{end}}>Banned</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-warning btn-sm w-100">
+                <i class="bi bi-pencil-square"></i> Cập nhật trạng thái
+              </button>
+            </form>
+          </div>
+        </div>
+        {{else}}
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle"></i> Không thể thay đổi trạng thái của quản trị viên.
+        </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bookings & Reviews Tabs -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-bookings" type="button" role="tab">
+      <i class="bi bi-calendar-check me-1"></i>Đặt tour ({{len .Bookings}})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button" role="tab">
+      <i class="bi bi-star me-1"></i>Đánh giá ({{len .Reviews}})
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <!-- Bookings Tab -->
+  <div class="tab-pane fade show active" id="tab-bookings" role="tabpanel">
+    {{if .Bookings}}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Tour</th>
+            <th>Số người</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th>Ngày đặt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Bookings}}
+          <tr>
+            <td class="text-muted">{{.ID}}</td>
+            <td>
+              {{if .Tour}}
+              {{.Tour.Title}}
+              {{else}}
+              <span class="text-muted">N/A</span>
+              {{end}}
+            </td>
+            <td>{{.NumParticipants}}</td>
+            <td>{{printf "%.0f" .TotalPrice}} ₫</td>
+            <td>
+              {{if eq .Status "pending"}}
+              <span class="badge text-bg-warning">Chờ xử lý</span>
+              {{else if eq .Status "confirmed"}}
+              <span class="badge text-bg-success">Đã xác nhận</span>
+              {{else if eq .Status "cancelled"}}
+              <span class="badge text-bg-danger">Đã hủy</span>
+              {{else if eq .Status "completed"}}
+              <span class="badge text-bg-primary">Hoàn thành</span>
+              {{else}}
+              <span class="badge text-bg-secondary">{{.Status}}</span>
+              {{end}}
+            </td>
+            <td class="text-muted small">{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-calendar-x display-6"></i>
+      <p class="mt-2">Người dùng chưa có đặt tour nào.</p>
+    </div>
+    {{end}}
+  </div>
+
+  <!-- Reviews Tab -->
+  <div class="tab-pane fade" id="tab-reviews" role="tabpanel">
+    {{if .Reviews}}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Tiêu đề</th>
+            <th>Loại</th>
+            <th>Trạng thái</th>
+            <th>Lượt thích</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Reviews}}
+          <tr>
+            <td class="text-muted">{{.ID}}</td>
+            <td>{{.Title}}</td>
+            <td>
+              {{if eq .Type "place"}}
+              <span class="badge text-bg-info">Địa điểm</span>
+              {{else if eq .Type "food"}}
+              <span class="badge text-bg-success">Ẩm thực</span>
+              {{else if eq .Type "news"}}
+              <span class="badge text-bg-primary">Tin tức</span>
+              {{else}}
+              <span class="badge text-bg-secondary">{{.Type}}</span>
+              {{end}}
+            </td>
+            <td>
+              {{if eq .Status "pending"}}
+              <span class="badge text-bg-warning">Chờ duyệt</span>
+              {{else if eq .Status "approved"}}
+              <span class="badge text-bg-success">Đã duyệt</span>
+              {{else if eq .Status "rejected"}}
+              <span class="badge text-bg-danger">Từ chối</span>
+              {{else}}
+              <span class="badge text-bg-secondary">{{.Status}}</span>
+              {{end}}
+            </td>
+            <td>{{.LikeCount}}</td>
+            <td class="text-muted small">{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-star display-6"></i>
+      <p class="mt-2">Người dùng chưa có đánh giá nào.</p>
+    </div>
+    {{end}}
+  </div>
+</div>
+{{end}}
+{{end}}

@@ -82,6 +82,11 @@ func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.Aut
 	dashboardHandler := adminHandlers.NewDashboardHandler(statsService)
 	adminAuthHandler := adminHandlers.NewAdminAuthHandler(authService)
 
+	// Admin User Management
+	userRepo := repository.NewUserRepository(db)
+	adminUserService := services.NewAdminUserService(userRepo)
+	userHandler := adminHandlers.NewUserHandler(adminUserService)
+
 	admin := router.Group("/admin")
 	{
 		admin.GET("/", redirectToDashboard)
@@ -93,6 +98,10 @@ func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.Aut
 	adminAuth := admin.Group("/", middleware.RequireAdmin())
 	{
 		adminAuth.GET("/dashboard", dashboardHandler.Index)
+
+		adminAuth.GET("/users", userHandler.List)
+		adminAuth.GET("/users/:id", userHandler.Detail)
+		adminAuth.POST("/users/:id/status", userHandler.UpdateStatus)
 	}
 }
 

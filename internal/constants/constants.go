@@ -33,4 +33,5 @@ const (
 	RouteAdminLogin     = "/admin/login"
 	RouteAdminLogout    = "/admin/logout"
 	RouteAdminDashboard = "/admin/dashboard"
+	RouteAdminUsers     = "/admin/users"
 )
