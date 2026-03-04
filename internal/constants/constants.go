@@ -29,9 +29,10 @@ const (
 )
 
 const (
-	RouteAdminRoot      = "/admin"
-	RouteAdminLogin     = "/admin/login"
-	RouteAdminLogout    = "/admin/logout"
-	RouteAdminDashboard = "/admin/dashboard"
-	RouteAdminUsers     = "/admin/users"
+	RouteAdminRoot       = "/admin"
+	RouteAdminLogin      = "/admin/login"
+	RouteAdminLogout     = "/admin/logout"
+	RouteAdminDashboard  = "/admin/dashboard"
+	RouteAdminUsers      = "/admin/users"
+	RouteAdminCategories = "/admin/categories"
 )

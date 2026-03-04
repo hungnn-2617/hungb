@@ -24,12 +24,13 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	userRepo := repository.NewUserRepository(db)
 	socialAcctRepo := repository.NewSocialAccountRepository(db)
 	authService := services.NewAuthService(db, userRepo, socialAcctRepo)
+	catRepo := repository.NewCategoryRepository(db)
 
-	setupPublicRoutes(router, db, authService, cfg)
-	setupAdminRoutes(router, db, authService)
+	setupPublicRoutes(router, db, authService, catRepo, cfg)
+	setupAdminRoutes(router, db, authService, catRepo)
 }
 
-func setupPublicRoutes(router *gin.Engine, db *gorm.DB, authService *services.AuthService, cfg *config.Config) {
+func setupPublicRoutes(router *gin.Engine, db *gorm.DB, authService *services.AuthService, catRepo repository.CategoryRepo, cfg *config.Config) {
 	authHandler := publicHandlers.NewAuthHandler(authService, cfg)
 
 	// Profile & Bank Account services
@@ -42,6 +43,7 @@ func setupPublicRoutes(router *gin.Engine, db *gorm.DB, authService *services.Au
 	bankAccountHandler := publicHandlers.NewBankAccountHandler(bankAccountService)
 
 	public := router.Group("/")
+	public.Use(middleware.LoadCategories(catRepo))
 	{
 		public.GET("/", homePage)
 		public.GET("/register", authHandler.RegisterForm)
@@ -76,7 +78,7 @@ func setupPublicRoutes(router *gin.Engine, db *gorm.DB, authService *services.Au
 	}
 }
 
-func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.AuthService) {
+func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.AuthService, catRepo repository.CategoryRepo) {
 	statsRepo := repository.NewStatsRepository(db)
 	statsService := services.NewStatsService(statsRepo)
 	dashboardHandler := adminHandlers.NewDashboardHandler(statsService)
@@ -86,6 +88,10 @@ func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.Aut
 	userRepo := repository.NewUserRepository(db)
 	adminUserService := services.NewAdminUserService(userRepo)
 	userHandler := adminHandlers.NewUserHandler(adminUserService)
+
+	// Admin Category Management
+	categoryService := services.NewCategoryService(catRepo)
+	categoryHandler := adminHandlers.NewCategoryHandler(categoryService)
 
 	admin := router.Group("/admin")
 	{
@@ -102,6 +108,13 @@ func setupAdminRoutes(router *gin.Engine, db *gorm.DB, authService *services.Aut
 		adminAuth.GET("/users", userHandler.List)
 		adminAuth.GET("/users/:id", userHandler.Detail)
 		adminAuth.POST("/users/:id/status", userHandler.UpdateStatus)
+
+		adminAuth.GET("/categories", categoryHandler.List)
+		adminAuth.GET("/categories/create", categoryHandler.CreateForm)
+		adminAuth.POST("/categories/create", categoryHandler.Create)
+		adminAuth.GET("/categories/:id/edit", categoryHandler.EditForm)
+		adminAuth.POST("/categories/:id/edit", categoryHandler.Update)
+		adminAuth.POST("/categories/:id/delete", categoryHandler.Delete)
 	}
 }
 
@@ -112,11 +125,12 @@ func healthCheck(c *gin.Context) {
 func homePage(c *gin.Context) {
 	flashSuccess, flashError := middleware.GetFlash(c)
 	c.HTML(http.StatusOK, "public/pages/home.html", gin.H{
-		"title":         messages.TitleHome,
-		"user":          middleware.GetCurrentUser(c),
-		"csrf_token":    middleware.CSRFToken(c),
-		"flash_success": flashSuccess,
-		"flash_error":   flashError,
+		"title":          messages.TitleHome,
+		"user":           middleware.GetCurrentUser(c),
+		"csrf_token":     middleware.CSRFToken(c),
+		"flash_success":  flashSuccess,
+		"flash_error":    flashError,
+		"nav_categories": middleware.GetNavCategories(c),
 	})
 }
 

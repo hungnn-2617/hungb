@@ -128,6 +128,28 @@ const (
 	LogAdminUserStatusFailed = "admin: update user status failed"
 )
 
+// ── Admin — Category Management
+const (
+	TitleAdminCategories     = "Quản lý danh mục"
+	TitleAdminCategoryCreate = "Thêm danh mục"
+	TitleAdminCategoryEdit   = "Chỉnh sửa danh mục"
+
+	MsgAdminCategoryCreated = "Thêm danh mục thành công."
+	MsgAdminCategoryUpdated = "Cập nhật danh mục thành công."
+	MsgAdminCategoryDeleted = "Xóa danh mục thành công."
+
+	ErrAdminCategoryNotFound   = "Không tìm thấy danh mục."
+	ErrAdminCategoryCreateFail = "Không thể thêm danh mục."
+	ErrAdminCategoryUpdateFail = "Không thể cập nhật danh mục."
+	ErrAdminCategoryDeleteFail = "Không thể xóa danh mục."
+	ErrAdminCategoryHasTours   = "Không thể xóa danh mục đang có tour liên kết."
+
+	LogAdminCategoryListFailed   = "admin: list categories failed"
+	LogAdminCategoryCreateFailed = "admin: create category failed"
+	LogAdminCategoryUpdateFailed = "admin: update category failed"
+	LogAdminCategoryDeleteFailed = "admin: delete category failed"
+)
+
 // ── Profile
 const (
 	TitleProfile     = "Hồ sơ cá nhân"

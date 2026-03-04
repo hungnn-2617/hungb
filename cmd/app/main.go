@@ -164,6 +164,12 @@ func loadTemplates(baseDir string) render.HTMLRender {
 		t := template.New("").Funcs(template.FuncMap{
 			"sub": func(a, b int) int { return a - b },
 			"add": func(a, b int) int { return a + b },
+			"derefUint": func(p *uint) uint {
+				if p == nil {
+					return 0
+				}
+				return *p
+			},
 			"pages": func(totalPages int) []int {
 				p := make([]int, totalPages)
 				for i := range p {
